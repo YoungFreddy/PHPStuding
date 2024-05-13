@@ -18,7 +18,7 @@ abstract class Repository
 class UserRepository extends Repository
 {
     private static array $adminPermission ;
-     public static function checkAdminPermission():void
+     public static function setAdminPermission():void
      {
         // if ($_SESSION['auth']==1)
          self::$adminPermission = [
@@ -32,13 +32,12 @@ class UserRepository extends Repository
 
 
 
-
     public static function findOneBy(array $criteria): UserModel
     {
         foreach (array_keys($criteria) as $key) {
             $send[] = '`' . $key . '` = :' . $key;
         }
-        $query = self::$adminPermission[__FUNCTION__] . implode(' && ', $send);
+        $query = 'SELECT * FROM `users` where '. implode(' && ', $send);
         $sth = DB::getInstance()->getConnection()->prepare($query);
         $sth->execute($criteria);
         return new UserModel($sth->fetch(PDO::FETCH_NAMED));
@@ -48,7 +47,9 @@ class UserRepository extends Repository
     {
         /*if ($_SESSION['Auth']==1) {
             $query = "SELECT * FROM `users`";
-        }else  */ $query =self::$adminPermission[__FUNCTION__];
+                       "SELECT email FROM"
+
+        }else  */ $query ='SELECT * FROM `users`';
         $sth = DB::getInstance()->getConnection()-> prepare($query);
         $sth->execute();
         foreach ($sth->fetchAll(PDO::FETCH_NAMED) as $row) {

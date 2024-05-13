@@ -12,23 +12,10 @@ class App
 
     public static function ControllerCall(Request $request): string
     {
+        $auth=1;
 
-        $req = explode("/", $request->getPathInfo());
-        $count = count($req);
 
-        if (2 < $count && $count < 5) {
-            $contr = ucfirst($req[1]) . 'Controller';
-            $action = $req[2];
-            $par = ($count == 4) ? $req[3] : null;
-        } else {
-            return 'Некорректный Api';
-        }
-        if (!class_exists($contr)) return 'Controller is incorrect';
-        if (!self::actionCheck($contr, $action)) return 'Action is incorrect';
-        if (self::paramActionCheck($contr, $action) == 0 && $count == 4) return 'This parameter is not supported by action';
-        if (!is_null($par) && !is_numeric($par)) return 'Parameter is incorrect';
-        UserRepository::checkAdminPermission();
-       var_dump((new $contr)->$action($par,$request));
+        var_dump((new $contr)->$action($par, $request));
         /*
          * Вызов контроллера
          *
@@ -39,18 +26,7 @@ class App
         return 'All is correct';
     }
 
-    public static function actionCheck($class, $action): bool
-    {
-        $q = new ReflectionClass($class);
-        return $q->hasMethod($action);
-    }
 
-    public static function paramActionCheck($class, $action)
-    {
-        $r = new ReflectionMethod($class, $action);
-        $params = $r->getParameters();
-        return count($params);
-    }
 }
 
 /* формируем запрос из массива
@@ -74,9 +50,10 @@ $array = $sth->fetchAll(PDO::FETCH_ASSOC);
 print_r(array_column($array,'Field'));
 */
 //if (isset($_SESSION['Auth'])) {
-   // echo 'you are authorized';
-    $request = new Request();
-  var_dump(App::ControllerCall($request));
+// echo 'you are authorized';
+$request = new Request();
+var_dump($request->contrName.'::'.$request->actionName.'('.$request->parName.')');
+//var_dump(App::ControllerCall($request));
 
 //} else echo 'You are not authorized';
 
