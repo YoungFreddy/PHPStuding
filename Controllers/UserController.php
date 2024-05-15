@@ -9,16 +9,16 @@ class UsersController
 
     public static function get(?int $id): array
     {
-        return AccessLeveling::userInfo($id);
+        return Вusiness::userInfo($id);
     }
 
-    public function list(): array
+    public static function list(): array
     {
-        return AccessLeveling::allUsersInfo();
+        return Вusiness::allUsersInfo();
     }
 
-    public function update(?int $id, Request $req): array
+    public static function update(?int $id, Request $req): bool
     {
-       return AccessLeveling::editUser($req);
+       return Вusiness::editUser($req);
     }
 }

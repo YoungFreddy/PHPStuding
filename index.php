@@ -10,12 +10,18 @@ class App
 {
     private array $routeList = [];
 
-    public static function ControllerCall(Request $request): string
+    public static function ControllerCall(): string
     {
         $auth=1;
 
 
-        var_dump((new $contr)->$action($par, $request));
+        //var_dump(Request::getRequest());
+        $request =Request::getRequest();
+        $contr = $request->contrName;
+        $act = $request->actionName;
+        $par = $request->parName;
+        var_dump((new $contr)->$act($par, $request));
+
         /*
          * Вызов контроллера
          *
@@ -51,8 +57,7 @@ print_r(array_column($array,'Field'));
 */
 //if (isset($_SESSION['Auth'])) {
 // echo 'you are authorized';
-$request = new Request();
-var_dump($request->contrName.'::'.$request->actionName.'('.$request->parName.')');
+App::ControllerCall();
 //var_dump(App::ControllerCall($request));
 
 //} else echo 'You are not authorized';
