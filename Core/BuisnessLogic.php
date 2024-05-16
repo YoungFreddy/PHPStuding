@@ -1,6 +1,6 @@
 <?php
 
-class Вusiness
+class Business
 {
     public static function shortUser(UserModel $userModel): array
     {
@@ -24,7 +24,7 @@ class Вusiness
         return $users_array;
     }
 
-    public static function editUser(Request $req): bool
+    public static function editUser(int $id,Request $req): bool
     {
         $id = 0; //$_SESSION['self_id']; пока вручную, будем получать из сессии
         $requestPar = $req->getData();
@@ -36,5 +36,8 @@ class Вusiness
 
     }
 
-
+    public static function deleteUser(int $id): bool
+    {
+        return UserRepository::delete($id);
+    }
 }

@@ -81,7 +81,4 @@ class Request
     }
 
 }
-//$request = new Request();
-//$request->getPathInfo();
-//var_dump($request->getMethod());
-//var_dump($request->getRoute());
+

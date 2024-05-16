@@ -9,16 +9,16 @@ class UsersController
 
     public static function get(?int $id): array
     {
-        return Вusiness::userInfo($id);
+        return Business::userInfo($id);
     }
 
     public static function list(): array
     {
-        return Вusiness::allUsersInfo();
+        return Business::allUsersInfo();
     }
 
-    public static function update(?int $id, Request $req): bool
+    public static function update(Request $req): bool
     {
-       return Вusiness::editUser($req);
+       return Business::editUser($_SESSION['self_id'],$req);
     }
 }

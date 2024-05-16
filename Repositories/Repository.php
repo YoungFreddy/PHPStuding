@@ -45,11 +45,7 @@ class UserRepository extends Repository
 
     public static  function findAll( ?Request $req= null):array
     {
-        /*if ($_SESSION['Auth']==1) {
-            $query = "SELECT * FROM `users`";
-                       "SELECT email FROM"
-
-        }else  */ $query ='SELECT * FROM `users`';
+        $query ='SELECT * FROM `users`';
         $sth = DB::getInstance()->getConnection()-> prepare($query);
         $sth->execute();
         foreach ($sth->fetchAll(PDO::FETCH_NAMED) as $row) {
@@ -70,4 +66,16 @@ class UserRepository extends Repository
         $sth->execute($user->main);
         return true;
     }
+
+    public static function delete($id): bool
+    {
+
+        $query = "DELETE FROM `users` WHERE id = :id ";
+        var_dump($query);
+        $sth = DB::getInstance()->getConnection()->prepare($query);
+        $sth->bindParam('id',$id);
+        $sth->execute();
+        return true;
+    }
+
 }

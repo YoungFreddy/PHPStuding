@@ -16,11 +16,14 @@ class App
 
 
         //var_dump(Request::getRequest());
-        $request =Request::getRequest();
-        $contr = $request->contrName;
-        $act = $request->actionName;
-        $par = $request->parName;
-        var_dump((new $contr)->$act($par, $request));
+        var_dump( $request =Request::getRequest());
+       if (isset($request)) {
+           $contr = $request->contrName;
+           $act = $request->actionName;
+           $par = $request->parName;
+           var_dump((new $contr)->$act($par, $request));
+       }
+           // var_dump(admin\UsersController::list());
 
         /*
          * Вызов контроллера
