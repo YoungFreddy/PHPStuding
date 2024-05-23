@@ -13,7 +13,8 @@ class Request
         if ($this->getMethod() === 'PUT') {
             parse_str(file_get_contents('php://input'), $put);
             $this->storage = $put;
-        } else   $this->storage = $_REQUEST;
+        }
+        else $this->storage = $_REQUEST;
         $this->contrName = $controller;
         $this->actionName = $actionName;
         $this->parName = $parName;
@@ -51,7 +52,6 @@ class Request
     {
         $r = new ReflectionMethod($class, $action);
         $params = $r->getParameters();
-        var_dump(count($params));
         if (count($params) > 0) {
             if ($params[0]->getName() == 'id') return true;
         }

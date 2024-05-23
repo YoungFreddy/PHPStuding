@@ -1,6 +1,7 @@
 <?php
 
 include_once "Controllers\UserController.php";
+include_once "Controllers\FilesController.php";
 include_once "Core\Request.php";
 include_once 'Services\Auth.php';
 include_once "Repositories\Repository.php";
@@ -14,14 +15,15 @@ class App
     {
         $auth=1;
 
-
-        //var_dump(Request::getRequest());
-        var_dump( $request =Request::getRequest());
+        //var_dump($_FILES);
+        $request = Request::getRequest();
        if (isset($request)) {
            $contr = $request->contrName;
            $act = $request->actionName;
            $par = $request->parName;
+           if (isset($par))
            var_dump((new $contr)->$act($par, $request));
+           else var_dump((new $contr)->$act($request));
        }
            // var_dump(admin\UsersController::list());
 

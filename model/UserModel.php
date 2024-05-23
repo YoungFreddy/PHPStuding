@@ -1,12 +1,5 @@
 <?php
 
-class Model
-{
-
-
-
-}
-
 
 class UserModel
 {
@@ -27,6 +20,28 @@ class UserModel
         }
     }
 
+}
 
+
+class FileModel
+{
+
+    public $main = [
+        'id'=>null,
+        'file_name'=>null,
+        'owner_name'=>null,
+        'owner_id'=>null,
+        'date'=>null,
+        'path'=>null,
+        'is_deleted'=>null
+    ];
+
+    public function __construct(array $fetch)
+    {
+        foreach ($fetch as $key => $value) {
+            $this->main[$key] = $value;
+        }
+    }
 
 }
+
