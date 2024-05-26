@@ -3,56 +3,78 @@
 
 abstract class Repository
 {
+    static public $TABLE_NAME = "";
+    static public $MODEL_NAME = "";
 
-    public static function findAll()
+    public static function findAll(array $criteria): array|null
     {
+        foreach (array_keys($criteria) as $key) {
+            $send[] = '`' . $key . '` = :' . $key;
+        }
+        $query = 'SELECT * FROM ' . static::$TABLE_NAME. ' where ' . implode(' && ', $send);
+        $sth = DB::getInstance()->getConnection()->prepare($query);
+        $sth->execute($criteria);
+        $list = $sth->fetchAll(PDO::FETCH_NAMED);
+        foreach ($list as $row) {
+            $Array[] = new (static::$MODEL_NAME)($row);
+        }
+        if (isset($Array)) return $Array;
+        return null;
     }
 
-    public static function findOneBy(array $criteria)
+    public static function findOneBy(array $criteria): Model|null
     {
+        foreach (array_keys($criteria) as $key) {
+            $send[] = '`' . $key . '` = :' . $key;
+        }
+        $query = 'SELECT * FROM ' . static::$TABLE_NAME . ' where ' . implode(' && ', $send);
+        $sth = DB::getInstance()->getConnection()->prepare($query);
+        $sth->execute($criteria);
+        $row = $sth->fetch(PDO::FETCH_NAMED);
+        if($row) return new  (static::$MODEL_NAME) ($row);
+
+        return null;
     }
 
+    public static function update(Model $model): bool
+    {
+        foreach (array_keys($model->main) as $key) {
+            $send[] = '`' . $key . '` = :' . $key;
+        }
+        $query = "UPDATE " . static::$TABLE_NAME . " SET " . implode(' , ', $send) . " WHERE " . static::$TABLE_NAME . ".`id` = :id ;";
+        $sth = DB::getInstance()->getConnection()->prepare($query);
+        $sth->bindParam('id', $model->main['id']);
+        $sth->execute($model->main);
+        return true;
+    }
+
+    public static function insert(Model $model): bool
+    {
+        foreach (array_keys($model->main) as $key) {
+            $send1[] = '`' . $key . '`';
+            $send2[] = ':' . $key;
+        }
+        $query = "INSERT INTO " . static::$TABLE_NAME . "(" . implode(' , ', $send1) . ") VALUES (" . implode(',', $send2) . ")";
+        $stmt = DB::getInstance()->getConnection()->prepare($query);
+        $stmt->execute($model->main);
+        return true;
+    }
+
+    public static function delete(Model $model): bool
+    {
+        $sth = DB::getInstance()->getConnection()->prepare($query);
+        $sth->bindParam('id', $id);
+        $sth->execute();
+        return true;
+    }
 }
 
 class UserRepository extends Repository
 {
-    private static array $adminPermission;
 
+    public static $TABLE_NAME = '`users`';
+    public static $MODEL_NAME = 'UserModel';
 
-    public static function findOneBy(array $criteria): UserModel
-    {
-        foreach (array_keys($criteria) as $key) {
-            $send[] = '`' . $key . '` = :' . $key;
-        }
-        $query = 'SELECT * FROM `users` where ' . implode(' && ', $send);
-        $sth = DB::getInstance()->getConnection()->prepare($query);
-        $sth->execute($criteria);
-        return new UserModel($sth->fetch(PDO::FETCH_NAMED));
-    }
-
-    public static function findAll(?Request $req = null): array
-    {
-        $query = 'SELECT * FROM `users`';
-        $sth = DB::getInstance()->getConnection()->prepare($query);
-        $sth->execute();
-        foreach ($sth->fetchAll(PDO::FETCH_NAMED) as $row) {
-            $usersArray[] = new UserModel($row);
-        }
-        return $usersArray;
-    }
-
-    public static function update(UserModel $user): bool
-    {
-        foreach (array_keys($user->main) as $key) {
-            $send[] = '`' . $key . '` = :' . $key;
-        }
-        $query = "UPDATE `users` SET " . implode(' , ', $send) . " WHERE `users`.`id` = :id ;";
-        var_dump($query);
-        $sth = DB::getInstance()->getConnection()->prepare($query);
-        $sth->bindParam('id', $user->main['id']);
-        $sth->execute($user->main);
-        return true;
-    }
 
     public static function delete($id): bool
     {
@@ -65,43 +87,12 @@ class UserRepository extends Repository
         return true;
     }
 }
+
 class FilesRepository extends Repository
 {
+    public static $TABLE_NAME = '`files`';
+    public static $MODEL_NAME = 'FileModel';
 
-    public static function findOneBy(array $criteria): FileModel
-    {
-        foreach (array_keys($criteria) as $key) {
-            $send[] = '`' . $key . '` = :' . $key;
-        }
-        $query = 'SELECT * FROM `files` where ' . implode(' && ', $send);
-        $sth = DB::getInstance()->getConnection()->prepare($query);
-        $sth->execute($criteria);
-        return new FileModel($sth->fetch(PDO::FETCH_NAMED));
-    }
-
-    public static function findAll(?Request $req = null): array
-    {
-        $query = 'SELECT * FROM `files`';
-        $sth = DB::getInstance()->getConnection()->prepare($query);
-        $sth->execute();
-        foreach ($sth->fetchAll(PDO::FETCH_NAMED) as $row) {
-            $filesArray[] = new FileModel($row);
-        }
-        return $filesArray;
-    }
-
-    public static function update(FileModel $user): bool
-    {
-        foreach (array_keys($user->main) as $key) {
-            $send[] = '`' . $key . '` = :' . $key;
-        }
-        $query = "UPDATE `users` SET " . implode(' , ', $send) . " WHERE `users`.`id` = :id ;";
-        var_dump($query);
-        $sth = DB::getInstance()->getConnection()->prepare($query);
-        $sth->bindParam('id', $user->main['id']);
-        $sth->execute($user->main);
-        return true;
-    }
 
     public static function delete($id): bool
     {
@@ -115,16 +106,13 @@ class FilesRepository extends Repository
     }
 
 
-    public static function insert(FileModel $file): bool
-    {
-        foreach (array_keys($file->main) as $key) {
-        $send1[] = '`' . $key . '`';
-        $send2[] = ':' . $key;
-      }
-        $query = "INSERT INTO `files` (" . implode(' , ', $send1) .") VALUES (". implode(',', $send2).")";
-        $stmt = DB::getInstance()->getConnection()->prepare($query);
-        $stmt->execute($file->main);
-        return true;
-
-    }
 }
+
+class DirectoryDB extends Repository
+{
+    public static $TABLE_NAME = '`directories`';
+    public static $MODEL_NAME = 'DirectoryModel';
+
+
+}
+

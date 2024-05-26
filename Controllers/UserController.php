@@ -19,6 +19,7 @@ class UsersController
 
     public static function update(Request $req): bool
     {
-       return Business::editUser($_SESSION['self_id'],$req);
+       //return Business::editUser($_SESSION['self_id'],$req);
+        return Business::editUser(0,$req);
     }
 }

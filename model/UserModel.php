@@ -1,7 +1,7 @@
 <?php
 
-
-class UserModel
+abstract class Model{}
+class UserModel extends Model
 {
 
     public $main = [
@@ -21,9 +21,7 @@ class UserModel
     }
 
 }
-
-
-class FileModel
+class FileModel extends Model
 {
 
     public $main = [
@@ -45,3 +43,18 @@ class FileModel
 
 }
 
+class DirectoryModel extends Model
+{
+    public $main = [
+        'id'=>null,
+        'directory'=>null,
+        'file_list'=>null,
+        'is_deleted'=>null
+    ];
+    public function __construct(array $fetch)
+    {
+        foreach ($fetch as $key => $value) {
+            $this->main[$key] = $value;
+        }
+    }
+}

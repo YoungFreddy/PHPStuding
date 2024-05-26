@@ -37,7 +37,9 @@ class Business
 
     public static function deleteUser(int $id): bool
     {
-        return UserRepository::delete($id);
+        $user = DirectoryDB::findOneBy(['id' => $id]);
+        $user->main['is_deleted'] = true;
+        return UserRepository::update($user);
     }
 
     public static function addFile(Request $req): bool
@@ -47,9 +49,10 @@ class Business
         if ($req->getMethod() != 'POST' && !$_FILES) return false;
         $file = array_values($_FILES);
         if ($file[0]["error"] != UPLOAD_ERR_OK) return false;
-        $name = ".\Repositories\Upload\\" . $file[0]["name"] . '-' . time();
+        $name = $file[0]["name"] . '-' . time();
+        $fullName = ".\Repositories\Upload\\" . $name;
         //print_r($name);
-        move_uploaded_file($file[0]["tmp_name"], $name);
+        move_uploaded_file($file[0]["tmp_name"], $fullName);
 
         $info = [
             'id' => null,
@@ -57,9 +60,13 @@ class Business
             'owner_name' => UserRepository::findOneBy(['id' => $self_id])->main['name'],
             'owner_id' => $self_id,
             'date' => date("Y-m-d H:i:s"),
-            'path' => 'root\\',
             'is_deleted' => false
         ];
+
+        if (isset($req->getData()['path']) && DirectoryDB::findOneBy(['directory' => $req->getData()['path']])) {
+            $info['path'] = $req->getData()['path'];
+        } else $info ['path'] = 'root' . DIRECTORY_SEPARATOR;
+
         FilesRepository::insert(new FileModel($info));
         echo "Файл загружен";
 
@@ -78,20 +85,84 @@ class Business
 
     private static function fakeFilename(string $name): string
     {
-        return substr($name,0,strripos($name,'-'));
+        return substr($name, 0, strripos($name, '-'));
     }
 
     public static function shortFile(FileModel $file): array
     {
         $name = $file->main['file_name'];
-        return array($file->main['id'],self::fakeFilename($name), $file->main['owner_name'], $file->main['date'],$file->main['path']);
+        return array($file->main['id'], self::fakeFilename($name), $file->main['owner_name'], $file->main['date'], $file->main['path']);
     }
 
-    public static function fileInfo(int $id):array
+    public static function fileInfo(int $id): array
     {
         $file = FilesRepository::findOneBy(['id' => $id]);
-        if ($file->main['is_deleted']) return self::shortFile($file);
+        if (!$file->main['is_deleted']) return self::shortFile($file);
         else return ['Файл удален'];
     }
 
+    public static function editName(int $id, Request $req): bool
+    {
+        //$id = 0; //$_SESSION['self_id']; пока вручную, будем получать из сессии
+        $requestPar = $req->getData();
+        $file = FilesRepository::findOneBy(['id' => $id]);
+        $file->main['file_name'] = $requestPar['file_name'] . '-' . time();;
+
+        return FilesRepository::update($file);
+    }
+    public static function editDirName(int $id, Request $req): bool
+    {
+        //$id = 0; //$_SESSION['self_id']; пока вручную, будем получать из сессии
+        $requestPar = $req->getData();
+        $folder = DirectoryDB::findOneBy(['id' => $id]);
+        var_dump($requestPar);
+        if ($folder) {
+            $folder->main['directory'] = 'root'.DIRECTORY_SEPARATOR.$requestPar['directory'];
+            return DirectoryDB::update($folder);
+        }
+        return false;
+    }
+
+    public static function addDirectory(Request $req): bool
+    {
+        $request = $req->getData();
+        if (isset($request['directory'])) $name = $request['directory'];
+        else return false;
+
+        if (!DirectoryDB::findOneBy(['directory' => 'root' . DIRECTORY_SEPARATOR . $name])) {
+            $arg = [
+                'id' => null,
+                'directory' => 'root' . DIRECTORY_SEPARATOR . $name,
+                'file_list' => null,
+                'is_deleted' => false
+            ];
+            $newDir = new DirectoryModel($arg);
+            DirectoryDB::insert($newDir);
+            return true;
+        }
+        return false;
+    }
+
+    public static function deleteFolder(int $id): bool
+    {
+        $folder = DirectoryDB::findOneBy(['id' => $id]);
+        $folder->main['is_deleted'] = true;
+        return DirectoryDB::update($folder);
+    }
+
+    public static function FolderInfo(int $id): array|false
+    {
+        $folder = DirectoryDB::findOneBy(['id' => $id]);
+        $arg = $folder->main['directory'];
+        $result = FilesRepository::findAll(['path'=>$arg]);;
+        if ($result) return $result;
+        return false;
+    }
+
+    public static function deleteFile(int $id): bool
+    {
+        $file = FilesRepository::findOneBy(['id' => $id]);
+        $file->main['is_deleted'] = true;
+        return UserRepository::update($file);
+    }
 }

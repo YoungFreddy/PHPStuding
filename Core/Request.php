@@ -13,8 +13,7 @@ class Request
         if ($this->getMethod() === 'PUT') {
             parse_str(file_get_contents('php://input'), $put);
             $this->storage = $put;
-        }
-        else $this->storage = $_REQUEST;
+        } else $this->storage = $_REQUEST;
         $this->contrName = $controller;
         $this->actionName = $actionName;
         $this->parName = $parName;
