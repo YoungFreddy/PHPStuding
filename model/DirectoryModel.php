@@ -1,15 +1,13 @@
 <?php
 
-class UserModel extends Model
+class DirectoryModel extends Model
 {
     public array $main = [
         'id' => null,
-        'login' => null,
-        'password' => null,
-        'email' => null,
-        'name' => null,
-        'role' => 0,
-        'is_deleted' => 0
+        'path' => null,
+        'owner_id' => null,
+        'parent_id' => null,
+        'is_deleted' => null
     ];
 
     public function __construct(array $fetch)
@@ -18,5 +16,4 @@ class UserModel extends Model
             $this->main[$key] = $value;
         }
     }
-
 }

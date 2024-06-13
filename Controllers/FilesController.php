@@ -1,63 +1,49 @@
 <?php
 
 
+use Domain\DirDomain;
+use Domain\FileDomain;
+
 include_once 'Core\DB.php';
-include_once 'model\UserModel.php';
-include_once 'Core\BuisnessLogic.php';
+include_once 'model\Model.php';
 
 class FilesController
 {
 
-    public static function get(int $id): array
+    public static function get(int $id): Response
     {
-        return Business::fileInfo($id);
+        return FileDomain::fileInfo($id);
     }
 
-    public static function list(): array
+    public static function list(): Response
     {
-        return Business::allFilesInfo();
+        return FileDomain::allFilesInfo();
     }
 
-    public static function rename(Request $req): bool
+    public static function rename(int $id,Request $req): Response
     {
-        //  return Business::editFile($_SESSION['self_id'], $req)
-        return Business::editName(1, $req);
+        return FileDomain::editName($id, $req);
     }
 
-    public static function add(Request $req): bool
+    public static function add(Request $req): Response
     {
-        return Business::addFile($req);
+        return FileDomain::addFile($req);
     }
-    public static function remove(int $id): bool
+    public static function remove(int $id): Response
     {
-        return Business::deleteFile($id);
+        return FileDomain::deleteFile($id);
+    }
+    public static function share(int $id, Request $req, int $user_id = 0):Response
+    {
+
+        return FileDomain::shareOperations($id,$req,$user_id);
     }
 
+    public static function download(int $id, Request $req):Response
+    {
 
+        return FileDomain::downloadFile($id,$req);
+    }
 }
 
-class DirectoriesController
-{
-    public static function add(Request $req): bool
-    {
-        return Business::addDirectory($req);
-    }
-    public static function rename(Request $req): bool
-    {
-        //  return Business::editFile($_SESSION['self_id'], $req)
-        return Business::editDirName(2, $req);
-    }
 
-    public static function delete(int $id): bool
-    {
-        //  return Business::editFile($_SESSION['self_id'], $req)
-        return Business::deleteFolder(2);
-    }
-
-    public static function get(int $id): array|bool
-    {
-        //  return Business::editFile($_SESSION['self_id'], $req)
-        return Business::folderInfo(2);
-    }
-
-}

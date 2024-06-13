@@ -3,64 +3,67 @@
 class Auth
 {
 
-    public static function regUser($login, $password):void
+    public static function regUser(Request $req): Response
     {
-        // Проверим, не занято ли имя пользователя
-        $stmt = DB::getInstance()->getConnection()->prepare("SELECT * FROM `users` WHERE `login` = :login");
-        $stmt->execute(['login' => $login]);
-        if ($stmt->rowCount() > 0) {
-            echo ('Это имя пользователя уже занято.');
-           // header('Location: /'); // Возврат на форму регистрации
-            return;
+        $request = $req->getData();
+        if (\Secondary::check( $request['login'])) return new Response(false,'Incorrect login ');
+        if (!array_key_exists("login", $request) && !array_key_exists("password", $request)) {
+            return new Response(false, 'Incorrect request: required field login and password!');
         }
-
-// Добавим пользователя в базу
-        $stmt = DB::getInstance()->getConnection()->prepare("INSERT INTO `users` (`login`, `password`) VALUES (:login, :password)");
-        $stmt->execute([
+        $login = $request['login'];
+        $password = $request['password'];
+        if (is_null($login) || is_null($password)) {
+            return new Response(false, 'Incorrect request: required not empty login and password!');
+        }
+        $user = UserRepository::findOneBy(['login' => $login]);
+        if ($user) return new Response(false, 'This login already exists');
+        $userDescr = [
+            'id' => null,
             'login' => $login,
             'password' => password_hash($password, PASSWORD_DEFAULT),
-        ]);
+            'email' => ($request['email'] ?? null),
+            'name' => ($request['name'] ?? null),
+            'role' => 0,
+            'is_deleted' => 0
+        ];
+        $root = [
+            'id'=>null,
+            'path'=>'root',
+            'parent_id'=>0,
+            'is_deleted'=>0
+        ];
+        $newUser = new UserModel($userDescr);
+        UserRepository::insert($newUser);
+        $root['owner_id'] =DB::getInstance()->getConnection()->lastInsertId();
+        $rootFolder = new DirectoryModel($root);
+        DirectoryDB::insert($rootFolder);
 
-        header('Location: login.php');
+        return new Response(true, 'Ok');
     }
 
 
-    public static function login($login, $password):void
+    public static function login(Request $req): Response
     {
-        // проверяем наличие пользователя с указанным юзернеймом
-        $stmt = DB::getInstance()->getConnection()->prepare("SELECT * FROM `users` WHERE `login` = :login");
-        $stmt->execute(['login' => $login]);
-        if (!$stmt->rowCount()) {
-            echo('Пользователь с такими данными не зарегистрирован');
-           // header('Location: login.php')
-            return;
-        }else {
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (isset($_SESSION['self_id'])) return new Response(false, 'You are already authorized');
+        $request = $req->getData();
+        if (!array_key_exists("login", $request) || !array_key_exists("password", $request)) {
+            return new Response(false, 'Incorrect request: required field login and password!');
         }
-// проверяем пароль
-        if (password_verify($password, $user['password'])) {
-            // Проверяем, не нужно ли использовать более новый алгоритм
-            // или другую алгоритмическую стоимость
-            // Например, если вы поменяете опции хеширования
-            if (password_needs_rehash($user['password'], PASSWORD_DEFAULT)) {
-                $newHash = password_hash($password, PASSWORD_DEFAULT);
-                $stmt = DB::getInstance()->getConnection()->prepare('UPDATE `users` SET `password` = :password WHERE `login` = :login');
-                $stmt->execute([
-                    'login' => $login,
-                    'password' => $newHash,
-                ]);
-            }
-            $_SESSION['Auth'] = $user['role'];
-            $_SESSION['id'] = $user['id'];
-           // header('Location: /');
-            echo 'success!!!!';
-           // var_dump(($_SESSION['Auth']));
-            //die;
-        }else {
+        $login = $request['login'];
+        $password = $request['password'];
+        if (is_null($login) || is_null($password)) {
+            return new Response(false, 'Incorrect request: required not empty login and password!');
+        }
 
-            echo('Пароль неверен');
-            //header('Location: login.php');
+        $user = UserRepository::findOneBy(['login' => $login]);
+        if (!isset($user)) return new Response(false, 'This login doesnt exists');
+        if (password_verify($password, $user->main['password'])) {
+            $_SESSION['auth'] = $user->main['role'];
+            $_SESSION['self_id'] = $user->main['id'];
+            return new Response(true, 'You are authorized');
         }
+        return new Response(false, 'Wrong password');
+
     }
 
     public static function logout(): bool

@@ -6,12 +6,17 @@ abstract class Repository
     static public $TABLE_NAME = "";
     static public $MODEL_NAME = "";
 
-    public static function findAll(array $criteria): array|null
+    public static function findAll(?array $criteria = null): array|null
     {
-        foreach (array_keys($criteria) as $key) {
-            $send[] = '`' . $key . '` = :' . $key;
+        if ($criteria === null) {
+            $query = 'SELECT * FROM ' . static::$TABLE_NAME . ' where `is_deleted` = 0';
+        } else {
+            foreach (array_keys($criteria) as $key) {
+                $send[] = '`' . $key . '` = :' . $key;
+            }
+            $query = 'SELECT * FROM ' . static::$TABLE_NAME . ' where ' . implode(' && ', $send) . '&& `is_deleted` = 0';
         }
-        $query = 'SELECT * FROM ' . static::$TABLE_NAME. ' where ' . implode(' && ', $send);
+
         $sth = DB::getInstance()->getConnection()->prepare($query);
         $sth->execute($criteria);
         $list = $sth->fetchAll(PDO::FETCH_NAMED);
@@ -27,11 +32,11 @@ abstract class Repository
         foreach (array_keys($criteria) as $key) {
             $send[] = '`' . $key . '` = :' . $key;
         }
-        $query = 'SELECT * FROM ' . static::$TABLE_NAME . ' where ' . implode(' && ', $send);
+        $query = 'SELECT * FROM ' . static::$TABLE_NAME . ' where ' . implode(' && ', $send) . ' && `is_deleted` = 0';
         $sth = DB::getInstance()->getConnection()->prepare($query);
         $sth->execute($criteria);
         $row = $sth->fetch(PDO::FETCH_NAMED);
-        if($row) return new  (static::$MODEL_NAME) ($row);
+        if ($row) return new  (static::$MODEL_NAME) ($row);
 
         return null;
     }
@@ -44,9 +49,9 @@ abstract class Repository
         $query = "UPDATE " . static::$TABLE_NAME . " SET " . implode(' , ', $send) . " WHERE " . static::$TABLE_NAME . ".`id` = :id ;";
         $sth = DB::getInstance()->getConnection()->prepare($query);
         $sth->bindParam('id', $model->main['id']);
-        $sth->execute($model->main);
-        return true;
+        return  $sth->execute($model->main);
     }
+
 
     public static function insert(Model $model): bool
     {
@@ -60,59 +65,8 @@ abstract class Repository
         return true;
     }
 
-    public static function delete(Model $model): bool
-    {
-        $sth = DB::getInstance()->getConnection()->prepare($query);
-        $sth->bindParam('id', $id);
-        $sth->execute();
-        return true;
-    }
 }
 
-class UserRepository extends Repository
-{
-
-    public static $TABLE_NAME = '`users`';
-    public static $MODEL_NAME = 'UserModel';
 
 
-    public static function delete($id): bool
-    {
-
-        $query = "DELETE FROM `users` WHERE id = :id ";
-        var_dump($query);
-        $sth = DB::getInstance()->getConnection()->prepare($query);
-        $sth->bindParam('id', $id);
-        $sth->execute();
-        return true;
-    }
-}
-
-class FilesRepository extends Repository
-{
-    public static $TABLE_NAME = '`files`';
-    public static $MODEL_NAME = 'FileModel';
-
-
-    public static function delete($id): bool
-    {
-
-        $query = "DELETE FROM `users` WHERE id = :id ";
-        var_dump($query);
-        $sth = DB::getInstance()->getConnection()->prepare($query);
-        $sth->bindParam('id', $id);
-        $sth->execute();
-        return true;
-    }
-
-
-}
-
-class DirectoryDB extends Repository
-{
-    public static $TABLE_NAME = '`directories`';
-    public static $MODEL_NAME = 'DirectoryModel';
-
-
-}
 

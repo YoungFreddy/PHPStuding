@@ -1,77 +1,52 @@
 <?php
 
-include_once "Controllers\UserController.php";
-include_once "Controllers\FilesController.php";
-include_once "Core\Request.php";
-include_once 'Services\Auth.php';
-include_once "Repositories\Repository.php";
 session_start();
+spl_autoload_register('autoload');
+
+function autoload($class): void
+{
+    $folderList = ['Controllers', 'Core', 'Core\\Domain', 'model', 'Repositories', 'Services'];
+    foreach ($folderList as $folder) {
+
+        $file = __DIR__ . '\\' . $folder . '\\' . $class . ".php";
+        //var_dump($file);
+        if (file_exists($file)) {
+            require_once $file;
+        }
+    }
+}
 
 class App
 {
-    private array $routeList = [];
+    private static array $adminControllers = ['admin\UsersController'];
 
     public static function ControllerCall(): string
     {
-        $auth=1;
 
-        //var_dump($_FILES);
         $request = Request::getRequest();
-       if (isset($request)) {
-           $contr = $request->contrName;
-           $act = $request->actionName;
-           $par = $request->parName;
-           if (isset($par))
-           var_dump((new $contr)->$act($par, $request));
-           else var_dump((new $contr)->$act($request));
-       }
-           // var_dump(admin\UsersController::list());
+        if (is_null($request->actionName)) return $request->message;
 
-        /*
-         * Вызов контроллера
-         *
-         *
-         *
-         */
+        if (!isset($_SESSION['self_id']) && $request->getPathInfo() != '/users/login' && $request->getPathInfo() != '/users/reg')
+            return 'Авторизуйтесь при помощи users/login или зарегистрируйтесь при помощи users/reg';
+        if (isset($_SESSION['auth']) && $_SESSION['auth'] == 0 && in_array($request->contrName, self::$adminControllers)) return 'Нет права доступа';
+
+        $contr = $request->contrName;
+        $act = $request->actionName;
+        $par = $request->par;
+
+        if (isset($par) && count($par) == 1)
+            var_dump((new $contr)->$act($par[0], $request));
+        elseif (isset($par) && count($par) == 2) var_dump((new $contr)->$act($par[0], $request, $par[1]));
+        else var_dump((new $contr)->$act($request));
 
         return 'All is correct';
     }
 
-
+}
+try {
+    var_dump(App::ControllerCall());
+} catch (Exception $e) {
+    echo 'PHP перехватил исключение: ',  $e->getMessage(), "\n";
 }
 
-/* формируем запрос из массива
- * $criteria=['login'=>'Admin','email'=> 'admin@gmail.com', 'password'=> '123456'];
-foreach (array_keys($criteria) as $key) {
-    $send[]='`'.$key.'` = :'.$key;
-}
-$query = "SELECT * FROM `users` where ".implode(' && ',$send);
-*/
 
-//$sth =DB::getInstance()->getConnection()->prepare("SELECT * FROM `users` WHERE `login` = :login && `password` = :password");
-//$sth->execute($criteria);
-//var_dump( $query);
-
-
-/*
- список полей в БД
-$sth = DB::getInstance()->getConnection()->prepare("SHOW COLUMNS FROM `users`");
-$sth->execute();
-$array = $sth->fetchAll(PDO::FETCH_ASSOC);
-print_r(array_column($array,'Field'));
-*/
-//if (isset($_SESSION['Auth'])) {
-// echo 'you are authorized';
-App::ControllerCall();
-//var_dump(App::ControllerCall($request));
-
-//} else echo 'You are not authorized';
-
-//Auth::logout();
-//Auth::login('User3','333333');
-//var_dump($req->getRoute());
-
-/*if (key_exists($req->getRoute(), $routeList)) {
-    var_dump($routeList[$req->getRoute()][$req->getMethod()]);
-
-}*/
